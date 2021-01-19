@@ -24,7 +24,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: ./Dockerfile-kube-cross
+          file: Dockerfile_kube_cross
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/kube-cross:latest
