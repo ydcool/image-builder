@@ -7,9 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  path-context:
     runs-on: ubuntu-latest
-
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -36,3 +35,4 @@ jobs:
             PROTOBUF_VERSION=3.7.0
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
+
