@@ -80,7 +80,7 @@ RUN targetArch=$(echo $TARGETPLATFORM | cut -f2 -d '/') \
     && for platform in ${KUBE_DYNAMIC_CROSSPLATFORMS}; do apt-get install -y crossbuild-essential-${platform}; done \
     && apt-get clean \
     && rm -rf -- \
-        /var/lib/apt/lists/*
+        /var/lib/apt/lists/* \
 fi
 
 RUN targetArch=$(echo $TARGETPLATFORM | cut -f2 -d '/') \
@@ -91,7 +91,7 @@ RUN targetArch=$(echo $TARGETPLATFORM | cut -f2 -d '/') \
     && apt-get install -y build-essential \
     && apt-get clean \
     && rm -rf -- \
-        /var/lib/apt/lists/*
+        /var/lib/apt/lists/* \
 fi
 
 ARG PROTOBUF_VERSION
