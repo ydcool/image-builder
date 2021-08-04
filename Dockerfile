@@ -22,7 +22,7 @@
 
 ARG GO_VERSION
 FROM golang:${GO_VERSION}
-#FROM golang:1.15.6
+#FROM golang:1.16.6
 
 ##------------------------------------------------------------
 # global ARGs & ENVs
@@ -55,7 +55,19 @@ RUN apt-get -q update \
         jq \
         patch \
         rsync \
-        unzip
+        unzip \
+        wget \
+        automake \
+        libtool \
+        libapparmor-dev \
+        libbtrfs-dev \
+        libcap-dev \
+        libdevmapper-dev \
+        libglib2.0-dev \
+        libseccomp-dev \
+    && apt-get clean \
+    && rm -rf -- \
+        /var/lib/apt/lists/*
 
 # Use dynamic cgo linking for architectures other than amd64 for the server platforms
 # To install crossbuild essential for other architectures add the following repository.
@@ -66,6 +78,9 @@ RUN targetArch=$(echo $TARGETPLATFORM | cut -f2 -d '/') \
     && apt-get update \
     && apt-get install -y build-essential \
     && for platform in ${KUBE_DYNAMIC_CROSSPLATFORMS}; do apt-get install -y crossbuild-essential-${platform}; done \
+    && apt-get clean \
+    && rm -rf -- \
+        /var/lib/apt/lists/*
 fi
 
 RUN targetArch=$(echo $TARGETPLATFORM | cut -f2 -d '/') \
@@ -73,7 +88,10 @@ RUN targetArch=$(echo $TARGETPLATFORM | cut -f2 -d '/') \
     echo "deb http://ports.ubuntu.com/ubuntu-ports/ xenial main" > /etc/apt/sources.list.d/ports.list \
     && apt-key adv --no-tty --keyserver keyserver.ubuntu.com --recv-keys 40976EAF437D05B5 3B4FE6ACC0B21F32 \
     && apt-get update \
-    && apt-get install -y build-essential; \
+    && apt-get install -y build-essential \
+    && apt-get clean \
+    && rm -rf -- \
+        /var/lib/apt/lists/*
 fi
 
 ARG PROTOBUF_VERSION
@@ -113,12 +131,5 @@ RUN targetArch=$(echo $TARGETPLATFORM | cut -f2 -d '/') \
   && curl -fsSL https://github.com/coreos/etcd/releases/download/${ETCD_VERSION}/etcd-${ETCD_VERSION}-linux-${targetArch}.tar.gz | tar -xz \
   && chown -R $(id -u):$(id -g) /usr/local/src/etcd \
   && ln -s ../src/etcd/etcd-${ETCD_VERSION}-linux-${targetArch}/etcd /usr/local/bin/
-
-# Cleanup a bit
-RUN apt-get -qqy remove \
-      wget \
-    && apt-get clean \
-    && rm -rf -- \
-        /var/lib/apt/lists/*
 
 ENTRYPOINT []
