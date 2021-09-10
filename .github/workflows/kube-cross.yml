@@ -28,11 +28,11 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/kube-cross:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/kube-cross:v1.16.6
+            ${{ secrets.DOCKERHUB_USERNAME }}/kube-cross:v1.17
           build-args: |
-            ETCD_VERSION=v3.4.13
-            GO_VERSION=1.16.6
+            GO_VERSION=1.17
             PROTOBUF_VERSION=3.7.0
+            OS_CODENAME=buster
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
 

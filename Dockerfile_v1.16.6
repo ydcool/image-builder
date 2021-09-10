@@ -14,38 +14,30 @@
 
 # This file creates a standard build environment for building cross
 # platform go binary for the architecture kubernetes cares about.
-
-# Ref: https://github.com/kubernetes/release/blob/master/images/build/cross/default/Dockerfile
+# 
+# Ref: https://github.com/kubernetes/release/blob/master/images/build/cross/Dockerfile
 #
 # Using CI build: https://github.com/ydcool/image-builder
+#
 
-# ARG BASEIMAGE
-# FROM ${BASEIMAGE}
 ARG GO_VERSION
-FROM golang:${GO_VERSION}
+ARG OS_CODENAME
+FROM golang:${GO_VERSION}-${OS_CODENAME}
+#FROM golang:1.17-buster
 
 ##------------------------------------------------------------
 # global ARGs & ENVs
-ARG TARGETPLATFORM
+ARG TARGETPLATFORM=amd64
 ARG DEBIAN_FRONTEND=noninteractive
 
 ENV GOARM 7
 ENV KUBE_DYNAMIC_CROSSPLATFORMS \
   arm64 \
-  armhf \
-  i386 \
-  ppc64el \
-  s390x \
   mips64el
 
 ENV KUBE_CROSSPLATFORMS \
-  linux/386 \
-  linux/arm linux/arm64 \
-  linux/ppc64le \
-  linux/s390x \
-  linux/mips64le \
-  darwin/amd64 darwin/386 \
-  windows/amd64 windows/386
+  linux/arm64 \
+  linux/mips64le 
 
 ##------------------------------------------------------------
 
@@ -85,7 +77,7 @@ RUN targetArch=$(echo $TARGETPLATFORM | cut -f2 -d '/') \
     echo "deb http://archive.ubuntu.com/ubuntu xenial main universe" > /etc/apt/sources.list.d/cgocrosscompiling.list \
     && apt-key adv --no-tty --keyserver keyserver.ubuntu.com --recv-keys 40976EAF437D05B5 3B4FE6ACC0B21F32 \
     && apt-get update \
-    && apt-get install -y build-essential mingw-w64 \
+    && apt-get install -y build-essential \
     && for platform in ${KUBE_DYNAMIC_CROSSPLATFORMS}; do apt-get install -y crossbuild-essential-${platform}; done \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* ;\
@@ -130,11 +122,13 @@ RUN go get golang.org/x/tools/cmd/cover \
            golang.org/x/tools/cmd/goimports \
     && go clean -cache
 
-# Cleanup a bit
-# RUN apt-get -qqy remove \
-#       wget \
-#     && apt-get clean \
-#     && rm -rf -- \
-#         /var/lib/apt/lists/*
+# Download and symlink etcd. We need this for our integration tests.
+ARG ETCD_VERSION
+RUN targetArch=$(echo $TARGETPLATFORM | cut -f2 -d '/') \
+  && mkdir -p /usr/local/src/etcd \
+  && cd /usr/local/src/etcd \
+  && curl -fsSL https://github.com/coreos/etcd/releases/download/${ETCD_VERSION}/etcd-${ETCD_VERSION}-linux-${targetArch}.tar.gz | tar -xz \
+  && chown -R $(id -u):$(id -g) /usr/local/src/etcd \
+  && ln -s ../src/etcd/etcd-${ETCD_VERSION}-linux-${targetArch}/etcd /usr/local/bin/
 
 ENTRYPOINT []
