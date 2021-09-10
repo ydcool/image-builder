@@ -33,19 +33,19 @@ ENV GOARM 7
 ENV KUBE_DYNAMIC_CROSSPLATFORMS \
   arm64 \
   armhf \
-  i386 \
-  ppc64el \
-  s390x \
   mips64el
+#   i386 \
+#   ppc64el \
+#   s390x \
 
 ENV KUBE_CROSSPLATFORMS \
-  linux/386 \
   linux/arm linux/arm64 \
-  linux/ppc64le \
-  linux/s390x \
-  linux/mips64le \
-  darwin/amd64 darwin/386 \
-  windows/amd64 windows/386
+  linux/mips64le 
+#   linux/386 \
+#   darwin/amd64 darwin/386 \
+#   windows/amd64 windows/386
+#   linux/s390x \
+#   linux/ppc64le \
 
 ##------------------------------------------------------------
 
