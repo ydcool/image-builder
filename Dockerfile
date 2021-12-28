@@ -64,7 +64,9 @@ RUN apt-get -q update \
         jq \
         patch \
         rsync \
+        zip \
         unzip \
+        tree \
         wget \
         automake \
         libtool \
