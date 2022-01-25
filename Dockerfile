@@ -53,7 +53,7 @@ ENV KUBE_CROSSPLATFORMS \
 RUN targetArch=$(echo $TARGETPLATFORM | cut -f2 -d '/');\
     if [ ${targetArch} = "amd64" ]; then \
       for platform in ${KUBE_CROSSPLATFORMS}; do GOOS=${platform%/*} GOARCH=${platform##*/} go install std; done \
-    fi \
+    fi; \
     go get golang.org/x/tools/cmd/cover \
             golang.org/x/tools/cmd/goimports \
     && go clean -cache
@@ -90,7 +90,7 @@ RUN apt-get -q update \
       && apt-key adv --no-tty --keyserver keyserver.ubuntu.com --recv-keys 40976EAF437D05B5 3B4FE6ACC0B21F32 \
       && apt-get update \
       && apt-get install -y build-essential; \
-    fi \
+    fi; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/* ;
 
