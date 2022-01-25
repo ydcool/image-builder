@@ -50,11 +50,13 @@ ENV KUBE_CROSSPLATFORMS \
 ##------------------------------------------------------------
 
 # Pre-compile the standard go library when cross-compiling. This is much easier now when we have go1.5+
-RUN targetArch=$(echo $TARGETPLATFORM | cut -f2 -d '/') \
-    && if [ ${targetArch} = "amd64" ]; then \
-    for platform in ${KUBE_CROSSPLATFORMS}; do GOOS=${platform%/*} GOARCH=${platform##*/} go install std; done \
-    && go clean -cache; \
-fi
+RUN targetArch=$(echo $TARGETPLATFORM | cut -f2 -d '/');\
+    if [ ${targetArch} = "amd64" ]; then \
+      for platform in ${KUBE_CROSSPLATFORMS}; do GOOS=${platform%/*} GOARCH=${platform##*/} go install std; done \
+    fi \
+    go get golang.org/x/tools/cmd/cover \
+            golang.org/x/tools/cmd/goimports \
+    && go clean -cache
 
 # Install packages
 RUN apt-get -q update \
@@ -75,33 +77,23 @@ RUN apt-get -q update \
         libcap-dev \
         libdevmapper-dev \
         libglib2.0-dev \
-        libseccomp-dev \
-    && apt-get clean \
-    && rm -rf -- \
-        /var/lib/apt/lists/*
+        libseccomp-dev; \
+    targetArch=$(echo $TARGETPLATFORM | cut -f2 -d '/'); \
+    if [ ${targetArch} = "amd64" ]; then \
+      echo "deb http://archive.ubuntu.com/ubuntu xenial main universe" > /etc/apt/sources.list.d/cgocrosscompiling.list \
+      && apt-key adv --no-tty --keyserver keyserver.ubuntu.com --recv-keys 40976EAF437D05B5 3B4FE6ACC0B21F32 \
+      && apt-get update \
+      && apt-get install -y build-essential mingw-w64 \
+      && for platform in ${KUBE_DYNAMIC_CROSSPLATFORMS}; do apt-get install -y crossbuild-essential-${platform}; done; \
+    elif  [ ${targetArch} = "arm64" ] || [ ${targetArch} = "ppc64le" ]; then \
+      echo "deb http://ports.ubuntu.com/ubuntu-ports/ xenial main" > /etc/apt/sources.list.d/ports.list \
+      && apt-key adv --no-tty --keyserver keyserver.ubuntu.com --recv-keys 40976EAF437D05B5 3B4FE6ACC0B21F32 \
+      && apt-get update \
+      && apt-get install -y build-essential; \
+    fi \
+    apt-get clean; \
+    rm -rf /var/lib/apt/lists/* ;
 
-# Use dynamic cgo linking for architectures other than amd64 for the server platforms
-# To install crossbuild essential for other architectures add the following repository.
-RUN targetArch=$(echo $TARGETPLATFORM | cut -f2 -d '/') \
-  && if [ ${targetArch} = "amd64" ]; then \
-    echo "deb http://archive.ubuntu.com/ubuntu xenial main universe" > /etc/apt/sources.list.d/cgocrosscompiling.list \
-    && apt-key adv --no-tty --keyserver keyserver.ubuntu.com --recv-keys 40976EAF437D05B5 3B4FE6ACC0B21F32 \
-    && apt-get update \
-    && apt-get install -y build-essential mingw-w64 \
-    && for platform in ${KUBE_DYNAMIC_CROSSPLATFORMS}; do apt-get install -y crossbuild-essential-${platform}; done \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* ;\
-fi
-
-RUN targetArch=$(echo $TARGETPLATFORM | cut -f2 -d '/') \
-  && if [ ${targetArch} = "arm64" ] || [ ${targetArch} = "ppc64le" ]; then \
-    echo "deb http://ports.ubuntu.com/ubuntu-ports/ xenial main" > /etc/apt/sources.list.d/ports.list \
-    && apt-key adv --no-tty --keyserver keyserver.ubuntu.com --recv-keys 40976EAF437D05B5 3B4FE6ACC0B21F32 \
-    && apt-get update \
-    && apt-get install -y build-essential \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* ;\
-fi
 
 ARG PROTOBUF_VERSION
 RUN targetArch=$(echo $TARGETPLATFORM | cut -f2 -d '/') \
@@ -126,11 +118,6 @@ ENV TMPDIR /tmp.k8s
 RUN mkdir $TMPDIR \
   && chmod a+rwx $TMPDIR \
   && chmod o+t $TMPDIR
-
-# Get the code coverage tool and goimports
-RUN go get golang.org/x/tools/cmd/cover \
-           golang.org/x/tools/cmd/goimports \
-    && go clean -cache
 
 # Cleanup a bit
 # RUN apt-get -qqy remove \
