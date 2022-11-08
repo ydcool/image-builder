@@ -32,7 +32,7 @@ jobs:
           build-args: |
             GO_VERSION=1.19
             PROTOBUF_VERSION=3.19.4
-            OS_CODENAME=bullseye
+            OS_CODENAME=buster
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
 
