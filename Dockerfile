@@ -35,7 +35,8 @@ ENV KUBE_DYNAMIC_CROSSPLATFORMS \
   armhf \
   i386 \
   ppc64el \
-  s390x
+  s390x \
+  mips64le
 
 ENV KUBE_CROSSPLATFORMS \
   linux/arm linux/arm64 \
@@ -75,26 +76,28 @@ RUN apt-get -q update \
         libcap-dev \
         libdevmapper-dev \
         libglib2.0-dev \
-        libseccomp-dev
-
-# Use dynamic cgo linking for architectures other than amd64 for the server platforms
-# To install crossbuild essential for other architectures add the following repository.
-RUN targetArch=$(echo $TARGETPLATFORM | cut -f2 -d '/') \
-  && if [ ${targetArch} = "amd64" ]; then \
-    echo "deb http://archive.ubuntu.com/ubuntu xenial main universe" > /etc/apt/sources.list.d/cgocrosscompiling.list \
-    && apt-key adv --no-tty --keyserver keyserver.ubuntu.com --recv-keys 40976EAF437D05B5 3B4FE6ACC0B21F32 \
-    && apt-get update \
-    && apt-get install -y build-essential mingw-w64 \
-    && for platform in ${KUBE_DYNAMIC_CROSSPLATFORMS}; do apt-get install -y crossbuild-essential-${platform}; done \
-fi
-
-RUN targetArch=$(echo $TARGETPLATFORM | cut -f2 -d '/') \
-  && if [ ${targetArch} = "arm64" ] || [ ${targetArch} = "ppc64le" ] || [ ${targetArch} = "s390x" ]; then \
-    echo "deb http://ports.ubuntu.com/ubuntu-ports/ xenial main" > /etc/apt/sources.list.d/ports.list \
-    && apt-key adv --no-tty --keyserver keyserver.ubuntu.com --recv-keys 40976EAF437D05B5 3B4FE6ACC0B21F32 \
-    && apt-get update \
-    && apt-get install -y build-essential; \
-fi
+        libseccomp-dev;\
+        # Use dynamic cgo linking for architectures other than amd64 for the server platforms
+        # To install crossbuild essential for other architectures add the following repository.
+        targetArch=$(echo $TARGETPLATFORM | cut -f2 -d '/') \
+          && if [ ${targetArch} = "amd64" ]; then \
+            echo "deb http://archive.ubuntu.com/ubuntu xenial main universe" > /etc/apt/sources.list.d/cgocrosscompiling.list \
+            && apt-key adv --no-tty --keyserver keyserver.ubuntu.com --recv-keys 40976EAF437D05B5 3B4FE6ACC0B21F32 \
+            && apt-get update \
+            && apt-get install -y build-essential mingw-w64 \
+            && for platform in ${KUBE_DYNAMIC_CROSSPLATFORMS}; do apt-get install -y crossbuild-essential-${platform}; done \
+        fi;\
+        targetArch=$(echo $TARGETPLATFORM | cut -f2 -d '/') \
+          && if [ ${targetArch} = "arm64" ] || [ ${targetArch} = "ppc64le" ] || [ ${targetArch} = "s390x" ]; then \
+            echo "deb http://ports.ubuntu.com/ubuntu-ports/ xenial main" > /etc/apt/sources.list.d/ports.list \
+            && apt-key adv --no-tty --keyserver keyserver.ubuntu.com --recv-keys 40976EAF437D05B5 3B4FE6ACC0B21F32 \
+            && apt-get update \
+            && apt-get install -y build-essential; \
+        fi;\
+        apt-get -qqy remove wget \
+        && apt-get clean \
+        && rm -rf -- \
+          /var/lib/apt/lists/*
 
 ARG PROTOBUF_VERSION
 RUN targetArch=$(echo $TARGETPLATFORM | cut -f2 -d '/') \
@@ -128,10 +131,10 @@ RUN for i in {1..5}; do GOPROXY="direct" go install golang.org/x/tools/cmd/cover
     && go clean -cache
 
 # Cleanup a bit
-RUN apt-get -qqy remove \
-      wget \
-    && apt-get clean \
-    && rm -rf -- \
-        /var/lib/apt/lists/*
+# RUN apt-get -qqy remove \
+#       wget \
+#     && apt-get clean \
+#     && rm -rf -- \
+#         /var/lib/apt/lists/*
 
 ENTRYPOINT []
