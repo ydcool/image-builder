@@ -94,8 +94,7 @@ RUN apt-get -q update \
             && apt-get update \
             && apt-get install -y build-essential; \
         fi;\
-        apt-get -qqy remove wget \
-        && apt-get clean \
+        apt-get clean \
         && rm -rf -- \
           /var/lib/apt/lists/*
 
