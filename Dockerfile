@@ -36,7 +36,7 @@ ENV KUBE_DYNAMIC_CROSSPLATFORMS \
   i386 \
   ppc64el \
   s390x \
-  mips64le
+  mips64el
 
 ENV KUBE_CROSSPLATFORMS \
   linux/arm linux/arm64 \
